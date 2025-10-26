@@ -2,40 +2,35 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Text to Speech Application</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>Speech Synthesis Application</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="main.css" />
 </head>
 <body>
-  <h1>Text to Speech Converter</h1>
-
   <div class="container">
-    <textarea id="textInput" placeholder="Enter text to convert to speech...">Hello! This is a text to speech demo. You can change my voice, rate, and pitch using the controls below.</textarea>
+    <h2>Text-to-Speech Application</h2>
+    <textarea id="text" placeholder="Enter text here..."></textarea>
 
     <div class="controls">
-      <div>
-        <label for="voiceSelect">Voice:</label>
-        <select id="voiceSelect"></select>
-      </div>
-      <div>
-        <label for="rate">Rate: <span id="rateValue">1</span></label>
-        <input type="range" id="rate" min="0.5" max="2" value="1" step="0.1" />
-      </div>
-      <div>
-        <label for="pitch">Pitch: <span id="pitchValue">1</span></label>
-        <input type="range" id="pitch" min="0.5" max="2" value="1" step="0.1" />
-      </div>
+      <label for="voice">Voice:</label>
+      <select id="voice"></select>
     </div>
 
-    <div class="buttons">
-      <button id="speakBtn">Speak</button>
-      <button id="pauseBtn">Pause/Resume</button>
-      <button id="stopBtn">Stop</button>
+    <div class="sliders">
+      <label for="rate">Rate:</label>
+      <input type="range" id="rate" min="0.5" max="2" step="0.1" value="1">
+      <span id="rateValue">1</span>
+      <label for="pitch" style="margin-left:15px;">Pitch:</label>
+      <input type="range" id="pitch" min="0" max="2" step="0.1" value="1">
+      <span id="pitchValue">1</span>
     </div>
 
-    <p class="status" id="statusText">Ready</p>
+    <div class="actions">
+      <button id="speak">Speak</button>
+      <button id="stop">Stop</button>
+    </div>
+    <div class="msg" id="msg"></div>
   </div>
-
-  <script src="script.js"></script>
+  <script src="main.js"></script>
 </body>
 </html>

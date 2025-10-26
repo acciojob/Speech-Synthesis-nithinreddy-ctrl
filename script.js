@@ -1,93 +1,93 @@
-// Your script here.
-const synth = window.speechSynthesis;
-let voices = [];
-let currentUtterance = null;
-let isPaused = false;
-
-const textInput = document.getElementById('textInput');
-const voiceSelect = document.getElementById('voiceSelect');
-const rate = document.getElementById('rate');
+const textArea = document.getElementById('text');
+const voiceSelect = document.getElementById('voice');
+const rateSlider = document.getElementById('rate');
+const pitchSlider = document.getElementById('pitch');
 const rateValue = document.getElementById('rateValue');
-const pitch = document.getElementById('pitch');
 const pitchValue = document.getElementById('pitchValue');
-const speakBtn = document.getElementById('speakBtn');
-const pauseBtn = document.getElementById('pauseBtn');
-const stopBtn = document.getElementById('stopBtn');
-const statusText = document.getElementById('statusText');
+const speakBtn = document.getElementById('speak');
+const stopBtn = document.getElementById('stop');
+const msg = document.getElementById('msg');
+let voices = [];
+let utterance = null;
+let speechInProgress = false;
 
-function populateVoiceList() {
-  voices = synth.getVoices();
+function loadVoices() {
+  voices = speechSynthesis.getVoices();
   voiceSelect.innerHTML = '';
-  voices.forEach((voice, index) => {
-    const option = document.createElement('option');
-    option.textContent = `${voice.name} (${voice.lang})`;
-    option.value = index;
-    voiceSelect.appendChild(option);
-  });
-}
-
-if (synth.onvoiceschanged !== undefined) {
-  synth.onvoiceschanged = populateVoiceList;
-} else {
-  populateVoiceList();
-}
-
-rate.addEventListener('input', () => rateValue.textContent = rate.value);
-pitch.addEventListener('input', () => pitchValue.textContent = pitch.value);
-
-function speak() {
-  if (synth.speaking) synth.cancel();
-
-  const text = textInput.value.trim();
-  if (!text) {
-    statusText.textContent = 'Please enter some text.';
+  if (!voices.length) {
+    voiceSelect.innerHTML = '<option>No voices available</option>';
+    msg.textContent = 'No voices found (try refreshing)';
+    speakBtn.disabled = true;
     return;
   }
-
-  currentUtterance = new SpeechSynthesisUtterance(text);
-  currentUtterance.voice = voices[voiceSelect.value];
-  currentUtterance.rate = parseFloat(rate.value);
-  currentUtterance.pitch = parseFloat(pitch.value);
-
-  currentUtterance.onstart = () => {
-    statusText.textContent = 'Speaking...';
-    speakBtn.disabled = true;
-  };
-
-  currentUtterance.onend = () => {
-    statusText.textContent = 'Finished speaking.';
-    speakBtn.disabled = false;
-    isPaused = false;
-  };
-
-  currentUtterance.onerror = (event) => {
-    statusText.textContent = `Error: ${event.error}`;
-    speakBtn.disabled = false;
-  };
-
-  synth.speak(currentUtterance);
+  voices.forEach((voice, idx) => {
+    const opt = document.createElement('option');
+    opt.value = idx;
+    opt.textContent = `${voice.name} (${voice.lang})${voice.default ? ' — DEFAULT' : ''}`;
+    voiceSelect.appendChild(opt);
+  });
+  speakBtn.disabled = false;
+  msg.textContent = '';
 }
 
-speakBtn.addEventListener('click', speak);
+if (typeof speechSynthesis.onvoiceschanged !== 'undefined') {
+  speechSynthesis.onvoiceschanged = loadVoices;
+}
+window.onload = loadVoices;
 
-pauseBtn.addEventListener('click', () => {
-  if (!synth.speaking) return;
-  if (isPaused) {
-    synth.resume();
-    isPaused = false;
-    statusText.textContent = 'Resumed speaking.';
-  } else {
-    synth.pause();
-    isPaused = true;
-    statusText.textContent = 'Paused.';
-  }
-});
+rateSlider.oninput = () => { rateValue.textContent = rateSlider.value; };
+pitchSlider.oninput = () => { pitchValue.textContent = pitchSlider.value; };
 
-stopBtn.addEventListener('click', () => {
-  if (synth.speaking) {
-    synth.cancel();
-    isPaused = false;
-    statusText.textContent = 'Speech stopped.';
-    speakBtn.disabled = false;
+function speak() {
+  const text = textArea.value.trim();
+  if (!text) {
+    msg.textContent = 'Enter some text!';
+    return;
   }
-});
+  if (!voices.length) {
+    msg.textContent = 'No voices loaded!';
+    return;
+  }
+  if (speechSynthesis.speaking) speechSynthesis.cancel();
+
+  utterance = new SpeechSynthesisUtterance(text);
+  const selectedVoice = voices[parseInt(voiceSelect.value, 10)];
+  utterance.voice = selectedVoice;
+  utterance.rate = parseFloat(rateSlider.value);
+  utterance.pitch = parseFloat(pitchSlider.value);
+
+  utterance.onstart = () => {
+    speechInProgress = true;
+    msg.textContent = 'Speaking...';
+  };
+  utterance.onend = () => {
+    speechInProgress = false;
+    msg.textContent = 'Finished.';
+  };
+  utterance.onerror = err => {
+    speechInProgress = false;
+    msg.textContent = 'Error: ' + err.error;
+  };
+  speechSynthesis.speak(utterance);
+}
+
+function stop() {
+  if (speechSynthesis.speaking) {
+    speechSynthesis.cancel();
+    msg.textContent = 'Stopped.';
+    speechInProgress = false;
+  }
+}
+
+voiceSelect.onchange = () => {
+  if (speechInProgress) {
+    stop();
+    setTimeout(speak, 180);
+  }
+};
+rateSlider.onchange = () => { if (speechInProgress) { stop(); setTimeout(speak, 180); }};
+pitchSlider.onchange = () => { if (speechInProgress) { stop(); setTimeout(speak, 180); }};
+
+speakBtn.onclick = speak;
+stopBtn.onclick = stop;
+speakBtn.disabled = true;
